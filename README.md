@@ -7,9 +7,7 @@
 - [打开注册地址绑定钱包](https://task.testnet.mangonetwork.io/?invite=Nng237)
 - [完成推特、DC、TG的绑定](https://task.testnet.mangonetwork.io/?invite=Nng237) 绑定完成之后点击 [Join now]
 - [任务页](https://task.testnet.mangonetwork.io/events)
-- Complete Task on the Task List ( Swap , Bridge )
 - Login Daily
-- Done
 
 **LFG**
 
@@ -18,8 +16,7 @@
 - Git (可选)
 - Node JS (v22) (必须)
 
- ## BOT FEATURE
- ## 机器人功能
+ ## BOT FEATURE 机器人功能
  ### 除了 DC 领水任务需要手动去DC频道完成，其余都可通过此脚本完成
 - Multi Account 多账户支持
 - Support PK 支持私钥导入
