@@ -37,7 +37,7 @@
 
 1. Clone project repository 可通过 git clone 或者直接去仓库 Download ZIP 解压
    ```
-   git clone https://github.com/airdropinsiders/Mango-Testnet-Auto-Bot.git && cd Mango-Testnet-Auto-Bot
+   git clone https://github.com/OCISHY/Mango-Testnet-Auto-Bot.git && cd Mango-Testnet-Auto-Bot
    ```
 2. Install Dependencies and Setup Accounts 安装依赖
    ```
@@ -61,7 +61,7 @@
 1. Open your `Command Prompt` or `Power Shell`.
 2. Clone project repository 可通过 git clone 或者直接去仓库 Download ZIP 解压
    ```
-   git clone https://github.com/airdropinsiders/Mango-Testnet-Auto-Bot.git
+   git clone https://github.com/OCISHY/Mango-Testnet-Auto-Bot.git
    ```
    and cd to project dir
    ```
