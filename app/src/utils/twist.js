@@ -1,40 +1,63 @@
 import '../service/core-service.js';
 import { Twisters } from 'twisters';
-import _0x230e63 from './logger.js';
+import logger from './logger.js';
 import { accountList } from '../../accounts/accounts.js';
+
 class Twist {
-  ["twisters"];
   constructor() {
     this.twisters = new Twisters();
   }
-  ['log'](_0xe6713f = '', _0x568ff1 = '', _0x3b4267, _0x1ad177) {
-    const _0x3bee01 = accountList.indexOf(_0x568ff1);
-    if (_0x1ad177 == undefined) {
-      _0x230e63.info("Account " + (_0x3bee01 + 0x1) + " - " + _0xe6713f);
-      _0x1ad177 = '-';
+
+  // Log function
+  // 日志函数
+  log(message = '', account = '', coreService, delay) {
+    const accountIndex = accountList.indexOf(account);
+    if (delay == undefined) {
+      logger.info("Account " + (accountIndex + 1) + " - " + message);
+      delay = '-';
     }
-    const _0x297a03 = _0x3b4267.address ?? '-';
-    const _0x34830a = _0x3b4267.balance ?? [];
-    const _0x34c6a3 = _0x3b4267.user ?? {};
-    const _0xf3feed = _0x34c6a3.MgoUser ?? {};
-    const _0x1e4eda = _0xf3feed.integral ?? '-';
-    this.twisters.put(_0x568ff1, {
-      'text': "\n================== Account " + (_0x3bee01 + 0x1) + " =================\nAddress      : " + _0x297a03 + "\nBalance      : " + _0x34830a.map(_0x26a238 => {
-        return "\n- " + _0x26a238.totalBalance + " " + _0x26a238.coinType.split('::').pop();
-      }) + "\nScore        : " + _0x1e4eda + "\n               \nStatus : " + _0xe6713f + "\nDelay  : " + _0x1ad177 + "\n=============================================="
+    const address = coreService.address ?? '-';
+    const balance = coreService.balance ?? [];
+    const user = coreService.user ?? {};
+    const mgoUser = user.MgoUser ?? {};
+    const score = mgoUser.integral ?? '-';
+    this.twisters.put(account, {
+      'text': `
+================== Account ${accountIndex + 1} =================
+Address钱包地址      : ${address}
+Balance余额      : ${balance.map(b => `\n- ${b.totalBalance} ${b.coinType.split('::').pop()}`)}
+Score积分        : ${score}
+               
+Status状态 : ${message}
+Delay延迟  : ${delay}
+==============================================
+`
     });
   }
-  ["info"](_0x21757e = '') {
+
+  // Info function
+  // 信息函数
+  info(message = '') {
     this.twisters.put('2', {
-      'text': "\n==============================================\nInfo : " + _0x21757e + "\n=============================================="
+      'text': `
+==============================================
+Info : ${message}
+==============================================
+`
     });
-    return;
   }
-  ["clearInfo"]() {
+
+  // Clear info function
+  // 清除信息函数
+  clearInfo() {
     this.twisters.remove('2');
   }
-  ["clear"](_0x3b5c47) {
-    this.twisters.remove(_0x3b5c47);
+
+  // Clear specific log
+  // 清除特定日志
+  clear(account) {
+    this.twisters.remove(account);
   }
 }
+
 export default new Twist();

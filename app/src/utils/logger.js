@@ -1,60 +1,77 @@
 import { createLogger, format, transports } from 'winston';
-import _0x348a66 from 'fs';
-const {
-  combine,
-  timestamp,
-  printf,
-  colorize
-} = format;
-const customFormat = printf(({
-  level: _0x113165,
-  message: _0x38a460,
-  timestamp: _0x16d269
-}) => {
-  return _0x16d269 + " [" + _0x113165 + "]: " + _0x38a460;
+import fs from 'fs';
+
+const { combine, timestamp, printf, colorize } = format;
+
+// Custom log format
+// 自定义日志格式
+const customFormat = printf(({ level, message, timestamp }) => {
+  return `${timestamp} [${level}]: ${message}`;
 });
+
 class Logger {
   constructor() {
     this.logger = createLogger({
-      'level': "debug",
-      'format': combine(timestamp({
-        'format': "YYYY-MM-DD HH:mm:ss"
-      }), colorize(), customFormat),
-      'transports': [new transports.File({
-        'filename': "log/app.log"
-      })],
-      'exceptionHandlers': [new transports.File({
-        'filename': "log/app.log"
-      })],
-      'rejectionHandlers': [new transports.File({
-        'filename': "log/app.log"
-      })]
+      level: "debug",
+      format: combine(
+        timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
+        colorize(),
+        customFormat
+      ),
+      transports: [
+        new transports.File({ filename: "log/app.log" })
+      ],
+      exceptionHandlers: [
+        new transports.File({ filename: "log/app.log" })
+      ],
+      rejectionHandlers: [
+        new transports.File({ filename: "log/app.log" })
+      ]
     });
   }
-  ["info"](_0x5d7f93) {
-    this.logger.info(_0x5d7f93);
+
+  // Log info level messages
+  // 记录信息级别的消息
+  info(message) {
+    this.logger.info(message);
   }
-  ["warn"](_0x265091) {
-    this.logger.warn(_0x265091);
+
+  // Log warn level messages
+  // 记录警告级别的消息
+  warn(message) {
+    this.logger.warn(message);
   }
-  ["error"](_0x242215) {
-    this.logger.error(_0x242215);
+
+  // Log error level messages
+  // 记录错误级别的消息
+  error(message) {
+    this.logger.error(message);
   }
-  ['debug'](_0x9f18d1) {
-    this.logger.debug(_0x9f18d1);
+
+  // Log debug level messages
+  // 记录调试级别的消息
+  debug(message) {
+    this.logger.debug(message);
   }
-  ['setLevel'](_0x421cd1) {
-    this.logger.level = _0x421cd1;
+
+  // Set log level
+  // 设置日志级别
+  setLevel(level) {
+    this.logger.level = level;
   }
-  ["clear"]() {
-    _0x348a66.truncate("log/app.log", 0x0, _0x4b6a3c => {
-      if (_0x4b6a3c) {
-        this.logger.error("Failed to clear the log file: " + _0x4b6a3c.message);
+
+  // Clear log file
+  // 清除日志文件
+  clear() {
+    fs.truncate("log/app.log", 0, err => {
+      if (err) {
+        this.logger.error("Failed to clear the log file: " + err.message);
       } else {
         this.logger.info("Log file cleared");
       }
     });
   }
 }
+
 const logger = new Logger();
 export default logger;

@@ -1,34 +1,50 @@
-import _0x540680 from 'fs';
-import _0x1bb255 from 'path';
-async function copyFolder(_0x121c47, _0x1215be) {
+import fs from 'fs';
+import path from 'path';
+
+// 复制文件夹
+async function copyFolder(src, dest) {
   try {
-    await _0x540680.promises.mkdir(_0x1215be, {
-      'recursive': true
-    });
-    const _0xabaec5 = await _0x540680.promises.readdir(_0x121c47, {
-      'withFileTypes': true
-    });
-    for (let _0x3739ee of _0xabaec5) {
-      const _0x56752c = _0x1bb255.join(_0x121c47, _0x3739ee.name);
-      const _0x47927a = _0x1bb255.join(_0x1215be, _0x3739ee.name);
-      if (_0x3739ee.isDirectory()) {
-        await copyFolder(_0x56752c, _0x47927a);
+    // 创建目标文件夹
+    await fs.promises.mkdir(dest, { recursive: true });
+
+    // 读取源文件夹内容
+    const entries = await fs.promises.readdir(src, { withFileTypes: true });
+
+    // 遍历文件夹内容
+    for (let entry of entries) {
+      const srcPath = path.join(src, entry.name);
+      const destPath = path.join(dest, entry.name);
+
+      // 如果是文件夹，递归复制
+      if (entry.isDirectory()) {
+        await copyFolder(srcPath, destPath);
       } else {
-        await _0x540680.promises.copyFile(_0x56752c, _0x47927a);
+        // 如果是文件，直接复制
+        await fs.promises.copyFile(srcPath, destPath);
       }
     }
-    console.log("Copied " + _0x121c47 + " to " + _0x1215be);
-  } catch (_0x592466) {
-    console.error("Error copying folder from " + _0x121c47 + " to " + _0x1215be + ':', _0x592466);
+    console.log("已将 " + src + " 复制到 " + dest);
+  } catch (error) {
+    console.error("复制文件夹从 " + src + " 到 " + dest + " 时出错:", error);
   }
 }
-const accountsSrc = _0x1bb255.join(process.cwd(), "accounts");
-const configSrc = _0x1bb255.join(process.cwd(), 'config');
-const accountsDest = _0x1bb255.join(process.cwd(), "app", "accounts");
-const configDest = _0x1bb255.join(process.cwd(), "app", "config");
+
+// 定义源文件夹和目标文件夹路径
+const accountsSrc = path.join(process.cwd(), "accounts");
+const configSrc = path.join(process.cwd(), 'config');
+const accountsDest = path.join(process.cwd(), "app", "accounts");
+const configDest = path.join(process.cwd(), "app", "config");
+
+// 主函数
 (async () => {
+  // 复制 accounts 文件夹
   await copyFolder(accountsSrc, accountsDest);
+
+  // 复制 config 文件夹
   await copyFolder(configSrc, configDest);
-  console.log("Starting the app...");
+
+  console.log("启动应用程序...");
+  
+  // 导入并启动应用程序
   await import("../app/index.js");
 })();

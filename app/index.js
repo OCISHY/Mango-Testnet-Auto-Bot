@@ -3,78 +3,87 @@ import './src/chain/dest_chain.js';
 import { COINS } from './src/coin/coins.js';
 import { CoreService } from './src/service/core-service.js';
 import { Helper } from './src/utils/helper.js';
-import _0x58c199 from './src/utils/logger.js';
-async function operation(_0x5a9aeb) {
-  const _0x542722 = new CoreService(_0x5a9aeb);
+import logger from './src/utils/logger.js';
+
+// Main operation function
+// 主操作函数
+async function operation(account) {
+  const coreService = new CoreService(account);
   try {
-    await _0x542722.getAccountInfo();
-    await _0x542722.getBalance(true);
-    await _0x542722.connectMango();
-    await _0x542722.getMangoUser(true);
-    //await Helper.refCheck(_0x542722.address, _0x542722.user.Premium);
-    await _0x542722.getFaucet();
-    await _0x542722.checkIn();
-    await _0x542722.getSwapTask();
-    if (_0x542722.swapTask.step.find(_0x5a8fb3 => _0x5a8fb3.status == '0') != undefined) {
-      await _0x542722.swap(COINS.MGO, COINS.USDT);
-      await _0x542722.swap(COINS.USDT, COINS.MAI);
-      await _0x542722.swap(COINS.MAI, COINS.USDT);
-      await _0x542722.swap(COINS.USDT, COINS.MGO);
-      for (const _0x4376c2 of _0x542722.swapTask.step) {
-        if (_0x4376c2.status == '0') {
-          await _0x542722.addStep(_0x542722.swapTask.detail.ID, _0x4376c2);
+    await coreService.getAccountInfo();
+    await coreService.getBalance(true);
+    await coreService.connectMango();
+    await coreService.getMangoUser(true);
+    //await Helper.refCheck(coreService.address, coreService.user.Premium);
+    await coreService.getFaucet();
+    await coreService.checkIn();
+    await coreService.getSwapTask();
+    if (coreService.swapTask.step.find(step => step.status == '0') != undefined) {
+      await coreService.swap(COINS.MGO, COINS.USDT);
+      await coreService.swap(COINS.USDT, COINS.MAI);
+      await coreService.swap(COINS.MAI, COINS.USDT);
+      await coreService.swap(COINS.USDT, COINS.MGO);
+      for (const step of coreService.swapTask.step) {
+        if (step.status == '0') {
+          await coreService.addStep(coreService.swapTask.detail.ID, step);
         }
       }
-      await Helper.delay(0x7d0, _0x5a9aeb, _0x542722.swapTask.detail.title + " Task is now Syncronizing", _0x542722);
-      await _0x542722.getMangoUser(true);
+      await Helper.delay(2000, account, coreService.swapTask.detail.title + " Task is now Synchronizing", coreService);
+      await coreService.getMangoUser(true);
     }
-    await _0x542722.getDiscordTask();
-    if (_0x542722.discordTask.step.find(_0x59d3db => _0x59d3db.status == '0') != undefined) {
-      await _0x542722.addStep(_0x542722.discordTask.detail.ID, _0x542722.discordTask.step[0x0]);
+    await coreService.getDiscordTask();
+    if (coreService.discordTask.step.find(step => step.status == '0') != undefined) {
+      await coreService.addStep(coreService.discordTask.detail.ID, coreService.discordTask.step[0]);
     }
-    await _0x542722.getExchangeTask();
-    if (_0x542722.exchangeTask.step.find(_0x50099b => _0x50099b.status == '0') != undefined) {
-      await _0x542722.swap(COINS.MGO, COINS.USDT);
-      await _0x542722.exchange(COINS.USDT, COINS.AI);
-      await _0x542722.exchange(COINS.AI, COINS.USDT);
-      await _0x542722.swap(COINS.USDT, COINS.MGO);
-      for (const _0x4ab54d of _0x542722.exchangeTask.step) {
-        if (_0x4ab54d.status == '0') {
-          await _0x542722.addStep(_0x542722.exchangeTask.detail.ID, _0x4ab54d);
+    await coreService.getExchangeTask();
+    if (coreService.exchangeTask.step.find(step => step.status == '0') != undefined) {
+      await coreService.swap(COINS.MGO, COINS.USDT);
+      await coreService.exchange(COINS.USDT, COINS.AI);
+      await coreService.exchange(COINS.AI, COINS.USDT);
+      await coreService.swap(COINS.USDT, COINS.MGO);
+      for (const step of coreService.exchangeTask.step) {
+        if (step.status == '0') {
+          await coreService.addStep(coreService.exchangeTask.detail.ID, step);
         }
       }
-      await Helper.delay(0x7d0, _0x5a9aeb, _0x542722.exchangeTask.detail.title + " Task is now Syncronizing", _0x542722);
-      await _0x542722.getMangoUser(true);
+      await Helper.delay(2000, account, coreService.exchangeTask.detail.title + " Task is now Synchronizing", coreService);
+      await coreService.getMangoUser(true);
     }
-    await Helper.delay(0x5265c00, _0x5a9aeb, "Accounts Processing Complete, Delaying For " + Helper.msToTime(0x5265c00) + '...', _0x542722);
-  } catch (_0x13a9d7) {
-    _0x58c199.info(_0x13a9d7.message);
-    await Helper.delay(0x1388, _0x5a9aeb, _0x13a9d7.message, _0x542722);
-    operation(_0x5a9aeb);
+    await Helper.delay(86400000, account, "Accounts Processing Complete, Delaying For " + Helper.msToTime(86400000) + '...', coreService);
+  } catch (error) {
+    logger.info(error.message);
+    await Helper.delay(5000, account, error.message, coreService);
+    operation(account);
   }
 }
+
+// Start the bot
+// 启动机器人
 async function startBot() {
   try {
-    _0x58c199.info("BOT STARTED");
-    if (accountList.length == 0x0) {
+    logger.info("BOT STARTED");
+    if (accountList.length == 0) {
       throw Error("Please input your account first on accounts.js file");
     }
-    const _0x8395 = [];
-    for (const _0x48096e of accountList) {
-      _0x8395.push(operation(_0x48096e));
+    const operations = [];
+    for (const account of accountList) {
+      operations.push(operation(account));
     }
-    await Promise.all(_0x8395);
-  } catch (_0xa373bf) {
-    _0x58c199.info("BOT STOPPED");
-    _0x58c199.error(JSON.stringify(_0xa373bf));
-    throw _0xa373bf;
+    await Promise.all(operations);
+  } catch (error) {
+    logger.info("BOT STOPPED");
+    logger.error(JSON.stringify(error));
+    throw error;
   }
 }
+
+// Main entry point
+// 主入口点
 (async () => {
   try {
-    _0x58c199.clear();
-    _0x58c199.info('');
-    _0x58c199.info("Application Started");
+    logger.clear();
+    logger.info('');
+    logger.info("Application Started");
     console.log();
     console.log(`
          █████╗ ██╗██████╗ ██████╗ ██████╗  ██████╗ ██████╗ 
@@ -92,10 +101,11 @@ async function startBot() {
         ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝╚═════╝ ╚══════╝╚═╝  ╚═╝
     `);
     console.log("MANGO TESTNET AUTO BOT");
-    console.log("Join our Channel : https://t.me/AirdropInsiderID");
+    console.log("原作者TG频道 : https://t.me/AirdropInsiderID");
+    console.log("我的推特: https://x.com/xwxboring")
     await startBot();
-  } catch (_0x4ab8f5) {
-    console.log("Error During executing bot", _0x4ab8f5);
+  } catch (error) {
+    console.log("Error During executing bot", error);
     await startBot();
   }
 })();

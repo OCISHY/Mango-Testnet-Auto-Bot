@@ -1,90 +1,90 @@
-import _0x2cc15f from 'fs';
-import _0x1e298b from 'path';
-async function fileExists(_0x58871d) {
+import fs from 'fs';
+import path from 'path';
+
+// 检查文件是否存在
+async function fileExists(filePath) {
   try {
-    await _0x2cc15f.promises.access(_0x58871d);
+    await fs.promises.access(filePath);
     return true;
   } catch {
     return false;
   }
 }
-async function copyFile(_0x36d70f, _0x2d3bc9) {
+
+// 复制文件
+async function copyFile(src, dest) {
   try {
-    if (await fileExists(_0x2d3bc9)) {
-      console.log("File already exists at " + _0x2d3bc9 + ", skipping copy.");
+    if (await fileExists(dest)) {
+      console.log("文件已存在于 " + dest + "，跳过复制。");
     } else {
-      await _0x2cc15f.promises.copyFile(_0x36d70f, _0x2d3bc9);
-      console.log("Copied " + _0x36d70f + " to " + _0x2d3bc9);
+      await fs.promises.copyFile(src, dest);
+      console.log("已将 " + src + " 复制到 " + dest);
     }
-  } catch (_0xe5b807) {
-    console.error("Error copying file from " + _0x36d70f + " to " + _0x2d3bc9 + ':', _0xe5b807);
+  } catch (error) {
+    console.error("复制文件从 " + src + " 到 " + dest + " 时出错:", error);
   }
 }
-async function createFolder(_0x4938ef) {
+
+// 创建文件夹
+async function createFolder(folderPath) {
   try {
-    const _0x5f3672 = await _0x2cc15f.promises.access(_0x4938ef).then(() => true)['catch'](() => false);
-    if (!_0x5f3672) {
-      await _0x2cc15f.promises.mkdir(_0x4938ef, {
-        'recursive': true
-      });
-      console.log("Created folder: " + _0x4938ef);
+    const folderExists = await fs.promises.access(folderPath).then(() => true).catch(() => false);
+    if (!folderExists) {
+      await fs.promises.mkdir(folderPath, { recursive: true });
+      console.log("已创建文件夹: " + folderPath);
     }
-  } catch (_0xfc9ad1) {
-    console.error("Error creating folder " + _0x4938ef + ':', _0xfc9ad1);
+  } catch (error) {
+    console.error("创建文件夹 " + folderPath + " 时出错:", error);
   }
 }
-async function fixMgoImports(_0x4f0087) {
+
+// 修复 mgo-types 和 mgo-system-state 的导入路径
+async function fixMgoImports(directory) {
   try {
-    const _0x79800a = await _0x2cc15f.promises.readdir(_0x4f0087, {
-      'withFileTypes': true
-    });
-    for (const _0x525fb1 of _0x79800a) {
-      const _0x59e31f = _0x1e298b.join(_0x4f0087, _0x525fb1.name);
-      if (_0x525fb1.isDirectory()) {
-        await fixMgoImports(_0x59e31f);
-      } else {
-        if (_0x525fb1.isFile() && _0x525fb1.name.endsWith(".js")) {
-          const _0x12c032 = await _0x2cc15f.promises.readFile(_0x59e31f, "utf-8");
-          if (_0x12c032.includes("from \"../utils/mgo-types\"")) {
-            const _0x1b0984 = _0x12c032.replace(/from "\.\.\/utils\/mgo-types"/g, "from \"../utils/mgo-types.js\"");
-            await _0x2cc15f.promises.writeFile(_0x59e31f, _0x1b0984, "utf-8");
-            console.log("Fixed imports in: " + _0x59e31f);
-          }
-          if (_0x12c032.includes("from \"./mgo-system-state\"")) {
-            const _0x37494b = _0x12c032.replace(/from "\.\/mgo-system-state"/g, "from \"./mgo-system-state.js\"");
-            await _0x2cc15f.promises.writeFile(_0x59e31f, _0x37494b, "utf-8");
-            console.log("Fixed imports in: " + _0x59e31f);
-          }
+    const dirEntries = await fs.promises.readdir(directory, { withFileTypes: true });
+    for (const entry of dirEntries) {
+      const fullPath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        await fixMgoImports(fullPath);
+      } else if (entry.isFile() && entry.name.endsWith(".js")) {
+        const fileContent = await fs.promises.readFile(fullPath, "utf-8");
+        if (fileContent.includes('from "../utils/mgo-types"')) {
+          const updatedContent = fileContent.replace(/from "\.\.\/utils\/mgo-types"/g, 'from "../utils/mgo-types.js"');
+          await fs.promises.writeFile(fullPath, updatedContent, "utf-8");
+          console.log("已修复导入路径: " + fullPath);
+        }
+        if (fileContent.includes('from "./mgo-system-state"')) {
+          const updatedContent = fileContent.replace(/from "\.\/mgo-system-state"/g, 'from "./mgo-system-state.js"');
+          await fs.promises.writeFile(fullPath, updatedContent, "utf-8");
+          console.log("已修复导入路径: " + fullPath);
         }
       }
     }
-  } catch (_0x526f48) {
-    console.error("Error fixing imports in directory " + _0x4f0087 + ':', _0x526f48);
+  } catch (error) {
+    console.error("修复目录 " + directory + " 中的导入路径时出错:", error);
   }
 }
-const copyOperations = [{
-  'src': _0x1e298b.join("config", "proxy_list_tmp.js"),
-  'dest': _0x1e298b.join('config', "proxy_list.js")
-}, {
-  'src': _0x1e298b.join("accounts", "accounts_tmp.js"),
-  'dest': _0x1e298b.join("accounts", "accounts.js")
-}];
+
+// 定义需要复制的文件操作
+const copyOperations = [
+  { src: path.join("config", "proxy_list_tmp.js"), dest: path.join('config', "proxy_list.js") },
+  { src: path.join("accounts", "accounts_tmp.js"), dest: path.join("accounts", "accounts.js") }
+];
+
+// 主函数
 (async () => {
-  console.log("Copying Template File");
+  console.log("复制模板文件");
   await createFolder("accounts");
-  for (let {
-    src: _0x3f2623,
-    dest: _0x5e2e2c
-  } of copyOperations) {
-    await copyFile(_0x3f2623, _0x5e2e2c);
+  for (let { src, dest } of copyOperations) {
+    await copyFile(src, dest);
   }
-  console.log("\nFixing @mgonetwork/mango.js imports...");
-  const _0x29d90b = _0x1e298b.join("node_modules", "@mgonetwork", "mango.js");
-  if (await fileExists(_0x29d90b)) {
-    await fixMgoImports(_0x29d90b);
+  console.log("\n修复 @mgonetwork/mango.js 的导入路径...");
+  const mangoJsDir = path.join("node_modules", "@mgonetwork", "mango.js");
+  if (await fileExists(mangoJsDir)) {
+    await fixMgoImports(mangoJsDir);
   } else {
-    console.error("Directory " + _0x29d90b + " not found. Skipping import fixes.");
+    console.error("目录 " + mangoJsDir + " 未找到。跳过导入路径修复。");
   }
-  console.log("\nSetup Complete");
-  console.log("Open and Configure\n- accounts/accounts.js\n- config/config.js\n ");
+  console.log("\n设置完成");
+  console.log("打开并配置\n- accounts/accounts.js\n- config/config.js\n ");
 })();
