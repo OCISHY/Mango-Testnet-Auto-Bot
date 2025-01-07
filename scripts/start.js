@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
 // 复制文件夹
 async function copyFolder(src, dest) {
@@ -31,20 +31,20 @@ async function copyFolder(src, dest) {
 
 // 定义源文件夹和目标文件夹路径
 const accountsSrc = path.join(process.cwd(), "accounts");
-const configSrc = path.join(process.cwd(), 'config');
+const configSrc = path.join(process.cwd(), "config");
 const accountsDest = path.join(process.cwd(), "app", "accounts");
 const configDest = path.join(process.cwd(), "app", "config");
 
 // 主函数
 (async () => {
   // 复制 accounts 文件夹
-  await copyFolder(accountsSrc, accountsDest);
+  // await copyFolder(accountsSrc, accountsDest);
 
   // 复制 config 文件夹
-  await copyFolder(configSrc, configDest);
+  // await copyFolder(configSrc, configDest);
 
   console.log("启动应用程序...");
-  
+
   // 导入并启动应用程序
   await import("../app/index.js");
 })();

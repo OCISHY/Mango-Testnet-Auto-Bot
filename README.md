@@ -1,7 +1,9 @@
 ## MANGO TESTNET AUTO BOT
+
 ## 欢迎关注我的推特(https://x.com/xwxboring)
 
 ## 注册阶段需要做的事情
+
 - [下载芒果钱包](https://chromewebstore.google.com/detail/mango-wallet/jiiigigdinhhgjflhljdkcelcjfmplnd)
 - [创建钱包且备份密钥] Backup Phrase
 - [打开注册地址绑定钱包](https://task.testnet.mangonetwork.io/?invite=Nng237)
@@ -16,8 +18,10 @@
 - Git (可选)
 - Node JS (v22) (必须)
 
- ## BOT FEATURE 机器人功能
- ### 除了 DC 领水任务需要手动去DC频道完成，其余都可通过此脚本完成
+## BOT FEATURE 机器人功能
+
+### 除了 DC 领水任务需要手动去DC频道完成，其余都可通过此脚本完成
+
 - Multi Account 多账户支持
 - Support PK 支持私钥导入
 - Proxy Support 支持 IP 代理
@@ -26,7 +30,6 @@
 - Daily BeingDex Beta DAPP 每日 BeingDex 任务
 - Daily Check In 每日签到
 - Daily Bridge 每日跨链桥任务
-
 
 ## SETUP & CONFIGURE BOT
 
@@ -45,14 +48,14 @@
    nano accounts/accounts.js
    ```
 4. Configure the bot config 配置 IP 代理
-    ```
+   ```
    nano config/proxy_list.js
-    ```
+   ```
 5. To run Auto TX 运行脚本
    ```
    npm run start
    ```
-   
+
 ### WINDOWS / MAC 系统使用步骤
 
 1. Open your `Command Prompt` or `Power Shell`.
@@ -72,13 +75,14 @@
 5. 在 `Mango-Testnet-Auto-Bot/config/proxy_list.js` 文件中按需要配置 IP 代理
 6. 在 `Mango-Testnet-Auto-Bot` 目录下打开命令行 `Command Prompt` or `Power Shell` .
 7. 执行脚本
-    ```
-    npm run start
-    ```
+   ```
+   npm run start
+   ```
 
 ## 代码更新之后同步更新
 
 如果使用的 git 拉取仓库执行以下命令 :
+
 1. 执行
    ```
    git pull
@@ -98,8 +102,27 @@
 3. 更新完成之后重新执行 npm run start 启动脚本
 4. 错误日志地址: `log/app.log`
 
+## 增加 docker 部署支持
+
+提前配置好 app/accounts 和 app/config/proxy_list.js 如果要修改就必须重新执行1、2步骤
+用docker部署方便管理，使用教程自行google/baidu
+
+1. 在项目目录下运行，生成镜像，mongo-bot名字可自定义
+
+```
+docker build -t mango-bot .
+```
+
+2. 基于镜像启动容器
+
+```
+docker run -d mongo-bot .
+```
+
+![alt text](image.png)
 
 ## IMPORTANT NOTE (READ IT THIS IS NOT DECORATION)
+
 DYOR & Always use a new wallet when running the bot, I am not responsible for any loss of assets.
 请自行研究并始终使用新钱包运行机器人，我不对任何资产损失负责.
 

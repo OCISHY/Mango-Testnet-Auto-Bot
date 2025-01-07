@@ -1,6 +1,2 @@
-accounts
-app/accounts/
-app/config/
-config/proxy_list.js
 log/
 node_modules/
