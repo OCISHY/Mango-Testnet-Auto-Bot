@@ -11,20 +11,41 @@ async function operation(account) {
   const coreService = new CoreService(account);
   try {
     await coreService.getAccountInfo();
+
+    // 获取MGO余额
     await coreService.getBalance(true);
+    // 连接钱包
     await coreService.connectMango();
+    // 获取用户信息
     await coreService.getMangoUser(true);
     //await Helper.refCheck(coreService.address, coreService.user.Premium);
+    // 领取水龙头
     await coreService.getFaucet();
+
+    // 签到
     await coreService.checkIn();
+
+    // Swap 三分任务
     await coreService.getSwapTask();
     if (
       coreService.swapTask.step.find((step) => step.status == "0") != undefined
     ) {
       await coreService.swap(COINS.MGO, COINS.USDT);
+      // 随机干扰事件
+      if (Math.random() < 0.5) {
+        await coreService.swap(COINS.MAI, COINS.USDT);
+      }
       await coreService.swap(COINS.USDT, COINS.MAI);
+      // 随机干扰事件
+      if (Math.random() < 0.2) {
+        await coreService.swap(COINS.USDT, COINS.MAI);
+      }
       await coreService.swap(COINS.MAI, COINS.USDT);
       await coreService.swap(COINS.USDT, COINS.MGO);
+      // 随机干扰事件
+      if (Math.random() < 0.1) {
+        await coreService.swap(COINS.MAI, COINS.MGO);
+      }
       for (const step of coreService.swapTask.step) {
         if (step.status == "0") {
           await coreService.addStep(coreService.swapTask.detail.ID, step);
@@ -38,6 +59,7 @@ async function operation(account) {
       );
       await coreService.getMangoUser(true);
     }
+    // discord 任务
     await coreService.getDiscordTask();
     if (
       coreService.discordTask.step.find((step) => step.status == "0") !=
@@ -48,12 +70,14 @@ async function operation(account) {
         coreService.discordTask.step[0]
       );
     }
+    // AI <=> USDT 任务
     await coreService.getExchangeTask();
     if (
       coreService.exchangeTask.step.find((step) => step.status == "0") !=
       undefined
     ) {
       await coreService.swap(COINS.MGO, COINS.USDT);
+      awaitHelper.delay;
       await coreService.exchange(COINS.USDT, COINS.AI);
       await coreService.exchange(COINS.AI, COINS.USDT);
       await coreService.swap(COINS.USDT, COINS.MGO);

@@ -360,12 +360,19 @@ export class CoreService extends API {
           coinType: fromCoin.TYPE,
         });
       }
-      let amount = Number(0.1) * Number(MIST_PER_MGO);
+      // 随机生成 0.05 - 0.2的随机数 随机保留2-4位小数
+      const randomDecimal = (Math.random() * (0.2 - 0.05) + 0.05).toFixed(
+        Math.floor(Math.random() * (4 - 2 + 1)) + 2
+      );
+      let amount = Number(randomDecimal) * Number(MIST_PER_MGO);
       let splitCoin;
       if (fromCoin == COINS.MGO) {
         splitCoin = txBlock.splitCoins(txBlock.gas, [txBlock.pure(amount)]);
       } else {
+        // 非 MGO 代币是否随机切割交易总额， true: 随机交易 50%-100%， false：交易 100%
+        const isCut = Math.random() > 0.5 ? true : false;
         amount = Number(coins.data[0].balance);
+        amount = isCut ? amount * Number(Math.random() * 0.5) : amount;
         splitCoin = txBlock.splitCoins(
           txBlock.object(coins.data[0].coinObjectId),
           [txBlock.pure(amount)]
@@ -374,15 +381,14 @@ export class CoreService extends API {
       await Helper.delay(
         1000,
         this.acc,
-        "Try to Swapping " +
+        `${isCut ? "🌟" : ""}` +
+          "Try to Swapping " +
           (fromCoin == COINS.MGO
             ? parseFloat(
                 (Number(amount) / Number(MIST_PER_MGO)).toString()
               ).toFixed(2)
             : parseFloat(
-                (
-                  Number(coins.data[0].balance) / Number(MIST_PER_MGO)
-                ).toString()
+                (Number(amount) / Number(MIST_PER_MGO)).toString()
               ).toFixed(5)) +
           " " +
           fromCoin.SYMBOL +
@@ -406,7 +412,8 @@ export class CoreService extends API {
       await Helper.delay(
         1000,
         this.acc,
-        "Try to Swapping " +
+        `${isCut ? "🌟" : ""}` +
+          "Try to Swapping " +
           parseFloat(
             (Number(amount) / Number(MIST_PER_MGO)).toString()
           ).toFixed(2) +
@@ -440,7 +447,8 @@ export class CoreService extends API {
       await Helper.delay(
         1000,
         this.acc,
-        "Successfully Swapping " +
+        `${isCut ? "🌟" : ""}` +
+          "Successfully Swapping " +
           parseFloat(
             (Number(amount) / Number(MIST_PER_MGO)).toString()
           ).toFixed(2) +

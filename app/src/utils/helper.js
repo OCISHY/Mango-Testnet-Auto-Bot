@@ -4,6 +4,12 @@ export class Helper {
   // Delay function
   // 延迟函数
   static delay = (ms, account, message, coreService) => {
+    // 随机生成 8 - 60 秒的延迟时间
+    if (ms == 0) {
+      ms = Math.floor(Math.random() * (60000 - 8000 + 1)) + 8000;
+    }
+    // 随机增加 0.5 - 2 秒的偏差值
+    ms = ms + Math.floor(Math.random() * (2000 - 500 + 1)) + 500;
     return new Promise(async (resolve) => {
       let remainingTime = ms;
       if (account != undefined) {

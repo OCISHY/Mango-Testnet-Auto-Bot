@@ -1,2 +1,4 @@
+app/accounts/
+app/config/
 log/
 node_modules/
