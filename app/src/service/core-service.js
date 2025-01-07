@@ -298,7 +298,7 @@ export class CoreService extends API {
         false
       );
     } catch (error) {
-      await Helper.delay(3000, this.acc, error.data.msg, this);
+      await Helper.delay(3000, this.acc, error?.data?.msg, this);
     }
   }
 
