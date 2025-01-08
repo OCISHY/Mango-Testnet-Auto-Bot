@@ -11,4 +11,4 @@
  *
  */
 
-export const accountList = [""];
+export const accountList = [];

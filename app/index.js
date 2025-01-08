@@ -60,16 +60,17 @@ async function operation(account) {
       await coreService.getMangoUser(true);
     }
     // discord 任务
-    await coreService.getDiscordTask();
-    if (
-      coreService.discordTask.step.find((step) => step.status == "0") !=
-      undefined
-    ) {
-      await coreService.addStep(
-        coreService.discordTask.detail.ID,
-        coreService.discordTask.step[0]
-      );
-    }
+    // await coreService.getDiscordTask();
+    // if (
+    //   coreService.discordTask.step.find((step) => step.status == "0") !=
+    //   undefined
+    // ) {
+    //   await coreService.addStep(
+    //     coreService.discordTask.detail.ID,
+    //     coreService.discordTask.step[0]
+    //   );
+    // }
+
     // AI <=> USDT 任务
     await coreService.getExchangeTask();
     if (
@@ -77,9 +78,11 @@ async function operation(account) {
       undefined
     ) {
       await coreService.swap(COINS.MGO, COINS.USDT);
-      awaitHelper.delay;
+      await Helper.delay(15000);
       await coreService.exchange(COINS.USDT, COINS.AI);
+      await Helper.delay(12000);
       await coreService.exchange(COINS.AI, COINS.USDT);
+      await Helper.delay(10000);
       await coreService.swap(COINS.USDT, COINS.MGO);
       for (const step of coreService.exchangeTask.step) {
         if (step.status == "0") {
@@ -118,8 +121,16 @@ async function startBot() {
       throw Error("Please input your account first on accounts.js file");
     }
     const operations = [];
-    for (const account of accountList) {
-      operations.push(operation(account));
+    for (let index = 0; index < accountList.length; index++) {
+      const account = accountList[index];
+
+      if (index > 0) {
+        // Add any specific logic for index > 0 here
+        const randomDelay =
+          Math.floor(Math.random() * (120000 - 60000 + 1)) + 60000;
+        await Helper.delay(randomDelay);
+      }
+      operations.push(operation(account, index));
     }
     await Promise.all(operations);
   } catch (error) {

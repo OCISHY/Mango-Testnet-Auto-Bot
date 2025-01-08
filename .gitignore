@@ -1,6 +1,2 @@
-app/accounts/*
-app/config/*
 log/
 node_modules/
-app/accounts
-app/config
