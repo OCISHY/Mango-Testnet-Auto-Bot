@@ -33,19 +33,19 @@ async function operation(account) {
       await coreService.swap(COINS.MGO, COINS.USDT);
       // 随机干扰事件
       if (Math.random() < 0.5) {
-        await coreService.swap(COINS.MAI, COINS.USDT);
+        await coreService.swap(COINS.MGO, COINS.MAI);
       }
       await coreService.swap(COINS.USDT, COINS.MAI);
       // 随机干扰事件
       if (Math.random() < 0.2) {
-        await coreService.swap(COINS.USDT, COINS.MAI);
+        await coreService.swap(COINS.MGO, COINS.USDT);
       }
       await coreService.swap(COINS.MAI, COINS.USDT);
-      await coreService.swap(COINS.USDT, COINS.MGO);
       // 随机干扰事件
       if (Math.random() < 0.1) {
-        await coreService.swap(COINS.MAI, COINS.MGO);
+        await coreService.swap(COINS.MGO, COINS.USDT);
       }
+      await coreService.swap(COINS.USDT, COINS.MGO);
       for (const step of coreService.swapTask.step) {
         if (step.status == "0") {
           await coreService.addStep(coreService.swapTask.detail.ID, step);

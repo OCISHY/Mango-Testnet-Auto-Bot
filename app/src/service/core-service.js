@@ -374,7 +374,8 @@ export class CoreService extends API {
       } else {
         // 非 MGO 代币是否随机切割交易总额， true: 随机交易 50%-100%， false：交易 100%
         amount = Number(coins.data[0].balance);
-        amount = isCut ? amount * Number(Math.random() * 0.5) : amount;
+        // amount = isCut ? Math.floor(amount * Number(Math.random() * 0.5)) : amount;
+        // amount = Math.floor(amount * Number(Math.random() * 0.5));
         splitCoin = txBlock.splitCoins(
           txBlock.object(coins.data[0].coinObjectId),
           [txBlock.pure(amount)]
