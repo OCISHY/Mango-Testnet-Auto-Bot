@@ -20,16 +20,17 @@
 
 ## BOT FEATURE 机器人功能
 
-### 除了 DC 领水任务需要手动去DC频道完成，其余都可通过此脚本完成
+### 目前支持的功能
 
-- Multi Account 多账户支持
+- Multi Account 多账户支持，多个钱包延迟启动避免被女巫
 - Support PK 支持私钥导入
 - Proxy Support 支持 IP 代理
-- Daily Claim Faucet 每日领取水龙头
-- Daily Mango Swap 每日 Swap 任务
-- Daily BeingDex Beta DAPP 每日 BeingDex 任务
-- Daily Check In 每日签到
-- Daily Bridge 每日跨链桥任务
+- Daily Claim Faucet 每日领取水龙头 discord需要人工手动去发，脚本已移除dicord任务，发完之后人工去点击提交
+- Daily Check In 每日签到 2分递增
+- Daily Mango Swap 每日 Swap 任务 3分
+- Daily BeingDex Beta DAPP  15分
+- 每日 BeingDex 任务 10分 需要用app去点击，脚本提交不生效已移除
+- Daily Bridge 每日跨链桥任务 不支持
 
 ## SETUP & CONFIGURE BOT
 
