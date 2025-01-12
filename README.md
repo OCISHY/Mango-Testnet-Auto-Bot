@@ -28,7 +28,7 @@
 - Daily Claim Faucet 每日领取水龙头 discord需要人工手动去发，脚本已移除dicord任务，发完之后人工去点击提交
 - Daily Check In 每日签到 2分递增
 - Daily Mango Swap 每日 Swap 任务 3分
-- Daily BeingDex Beta DAPP  15分
+- Daily BeingDex Beta DAPP 15分
 - 每日 BeingDex 任务 10分 需要用app去点击，脚本提交不生效已移除
 - Daily Bridge 每日跨链桥任务 不支持
 
@@ -44,15 +44,11 @@
    ```
    npm install && npm run setup
    ```
-3. Configure your accounts 配置钱包私钥
+3. Configure your accounts 配置钱包私钥和 proxy代理
    ```
-   nano accounts/accounts.js
+   nano app/config/index.js
    ```
-4. Configure the bot config 配置 IP 代理
-   ```
-   nano config/proxy_list.js
-   ```
-5. To run Auto TX 运行脚本
+4. To run Auto TX 运行脚本
    ```
    npm run start
    ```
@@ -105,7 +101,7 @@
 
 ## 增加 docker 部署支持
 
-提前配置好 app/accounts 和 app/config/proxy_list.js 如果要修改就必须重新执行1、2步骤
+提前配置好 app/config/index.js 如果要修改就必须重新执行1、2步骤
 用docker部署方便管理，使用教程自行google/baidu
 
 1. 在项目目录下运行，生成镜像，mongo-bot名字可自定义

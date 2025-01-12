@@ -1,14 +1,17 @@
-import { accountList } from "./accounts/accounts.js";
+// filepath: /Users/spike/Dev/Crypto/Tools/Mango-Testnet-Auto-Bot/app/index.js
+import { accounts } from "./config/index.js";
 import "./src/chain/dest_chain.js";
 import { COINS } from "./src/coin/coins.js";
-import { CoreService } from "./src/service/core-service.js";
+import { TaskStatus, CoreService } from "./src/service/core-service.js";
 import { Helper } from "./src/utils/helper.js";
 import logger from "./src/utils/logger.js";
+import eventBus from "./src/utils/eventBus.js";
 
 // Main operation function
 // 主操作函数
-async function operation(account) {
+async function operation(account, index) {
   const coreService = new CoreService(account);
+
   try {
     await coreService.getAccountInfo();
 
@@ -23,53 +26,82 @@ async function operation(account) {
     await coreService.getFaucet();
 
     // 签到
-    await coreService.checkIn();
+    let checkInRes = await coreService.checkIn();
 
     // Swap 三分任务
     await coreService.getSwapTask();
-    if (
-      coreService.swapTask.step.find((step) => step.status == "0") != undefined
-    ) {
-      await coreService.swap(COINS.MGO, COINS.USDT);
-      // 随机干扰事件
-      if (Math.random() < 0.5) {
-        await coreService.swap(COINS.MGO, COINS.MAI);
-      }
-      await coreService.swap(COINS.USDT, COINS.MAI);
-      // 随机干扰事件
-      if (Math.random() < 0.2) {
-        await coreService.swap(COINS.MGO, COINS.USDT);
-      }
-      await coreService.swap(COINS.MAI, COINS.USDT);
-      // 随机干扰事件
-      if (Math.random() < 0.1) {
-        await coreService.swap(COINS.MGO, COINS.USDT);
-      }
-      await coreService.swap(COINS.USDT, COINS.MGO);
-      for (const step of coreService.swapTask.step) {
-        if (step.status == "0") {
-          await coreService.addStep(coreService.swapTask.detail.ID, step);
+
+    let retries = 0;
+    let success = false;
+
+    while (retries < 3 && !success) {
+      try {
+        if (
+          coreService.swapTask.step.find((step) => step.status == "0") !=
+          undefined
+        ) {
+          await coreService.swap(COINS.MGO, COINS.USDT);
+          // 随机干扰事件
+          if (Math.random() < 0.5) {
+            await coreService.swap(COINS.MGO, COINS.MAI);
+          }
+          await coreService.swap(COINS.USDT, COINS.MAI);
+          // 随机干扰事件
+          if (Math.random() < 0.2) {
+            await coreService.swap(COINS.MGO, COINS.USDT);
+          }
+          await coreService.swap(COINS.MAI, COINS.USDT);
+          // 随机干扰事件
+          if (Math.random() < 0.1) {
+            await coreService.swap(COINS.MGO, COINS.USDT);
+          }
+          await coreService.swap(COINS.USDT, COINS.MGO);
+          for (const step of coreService.swapTask.step) {
+            if (step.status == "0") {
+              await coreService.addStep(coreService.swapTask.detail.ID, step);
+            }
+          }
+          await Helper.delay(
+            2000,
+            account,
+            coreService.swapTask.detail.title + " Task is now Synchronizing",
+            coreService
+          );
+          success = true;
+          coreService.taskStatus.swap = TaskStatus.COMPLETED;
+          await coreService.getMangoUser(true);
+        } else {
+          success = true;
+          coreService.taskStatus.swap = TaskStatus.ALREADY_COMPLETED;
+        }
+      } catch (error) {
+        retries++;
+        if (retries < 3) {
+          logger.error(`Retrying due to error... Attempt ${retries}`);
+        } else {
+          if (coreService?.TaskStatus?.swap) {
+            coreService.TaskStatus.swap = TaskStatus.FAILED;
+          }
+          throw new Error("Failed to complete the process after 3 attempts");
         }
       }
-      await Helper.delay(
-        2000,
-        account,
-        coreService.swapTask.detail.title + " Task is now Synchronizing",
-        coreService
-      );
-      await coreService.getMangoUser(true);
+    }
+
+    if (checkInRes !== true) {
+      // 签到
+      checkInRes = await coreService.checkIn();
     }
     // discord 任务
-    // await coreService.getDiscordTask();
-    // if (
-    //   coreService.discordTask.step.find((step) => step.status == "0") !=
-    //   undefined
-    // ) {
-    //   await coreService.addStep(
-    //     coreService.discordTask.detail.ID,
-    //     coreService.discordTask.step[0]
-    //   );
-    // }
+    await coreService.getDiscordTask();
+    if (
+      coreService.discordTask.step.find((step) => step.status == "0") !=
+      undefined
+    ) {
+      await coreService.addStep(
+        coreService.discordTask.detail.ID,
+        coreService.discordTask.step[0]
+      );
+    }
 
     // AI <=> USDT 任务
     await coreService.getExchangeTask();
@@ -77,26 +109,76 @@ async function operation(account) {
       coreService.exchangeTask.step.find((step) => step.status == "0") !=
       undefined
     ) {
-      await coreService.swap(COINS.MGO, COINS.USDT);
-      await Helper.delay(15000);
-      await coreService.exchange(COINS.USDT, COINS.AI);
-      await Helper.delay(12000);
-      await coreService.exchange(COINS.AI, COINS.USDT);
-      await Helper.delay(10000);
-      await coreService.swap(COINS.USDT, COINS.MGO);
-      for (const step of coreService.exchangeTask.step) {
-        if (step.status == "0") {
-          await coreService.addStep(coreService.exchangeTask.detail.ID, step);
+      let retries = 0;
+      let success = false;
+      while (retries < 3 && !success) {
+        try {
+          await coreService.swap(COINS.MGO, COINS.USDT);
+          await Helper.delay(15000);
+          const res1 = await coreService.exchange(COINS.USDT, COINS.AI);
+          if (!res1) {
+            retries++;
+            throw Error("Failed to exchange USDT to AI: retrying ", retries);
+          }
+          await Helper.delay(12000);
+          const res2 = await coreService.exchange(COINS.AI, COINS.USDT);
+          if (!res2) {
+            retries++;
+            throw Error("Failed to exchange AI to USDT: retrying ", retries);
+          }
+          coreService.taskStatus.exchange = TaskStatus.COMPLETED;
+          await Helper.delay(10000);
+          if (Math.random() < 0.5) {
+            await coreService.swap(COINS.MGO, COINS.USDT);
+            await coreService.swap(COINS.USDT, COINS.MGO);
+          } else {
+            await coreService.swap(COINS.USDT, COINS.MGO);
+          }
+
+          for (const step of coreService.exchangeTask.step) {
+            if (step.status == "0") {
+              await coreService.addStep(
+                coreService.exchangeTask.detail.ID,
+                step
+              );
+            }
+          }
+          await Helper.delay(
+            2000,
+            account,
+            coreService.exchangeTask.detail.title +
+              " Task is now Synchronizing",
+            coreService
+          );
+          success = true;
+          await coreService.getMangoUser(true);
+        } catch (error) {
+          if (coreService?.taskStatus?.exchange) {
+            coreService.taskStatus.exchange = TaskStatus.FAILED;
+          }
+          logger.info(error.message);
         }
       }
-      await Helper.delay(
-        2000,
-        account,
-        coreService.exchangeTask.detail.title + " Task is now Synchronizing",
-        coreService
-      );
-      await coreService.getMangoUser(true);
+    } else {
+      coreService.taskStatus.exchange = TaskStatus.ALREADY_COMPLETED;
     }
+
+    if (checkInRes !== true) {
+      // 签到
+      checkInRes = await coreService.checkIn();
+    }
+
+    if (checkInRes) {
+      coreService.taskStatus.checkIn = TaskStatus.COMPLETED;
+    } else if (coreService?.taskStatus?.checkIn) {
+      coreService.taskStatus.checkIn = TaskStatus.FAILED;
+    }
+
+    eventBus.setTotalCompleteAccounts({
+      index: index,
+      account: account,
+    });
+
     await Helper.delay(
       86400000,
       account,
@@ -106,9 +188,10 @@ async function operation(account) {
       coreService
     );
   } catch (error) {
+    console.log(error, "error");
     logger.info(error.message);
     await Helper.delay(5000, account, error.message, coreService);
-    operation(account);
+    operation(account, index);
   }
 }
 
@@ -117,17 +200,24 @@ async function operation(account) {
 async function startBot() {
   try {
     logger.info("BOT STARTED");
-    if (accountList.length == 0) {
-      throw Error("Please input your account first on accounts.js file");
+    if (accounts.length === 0) {
+      throw Error(
+        "Please input your account first on app/config/index.js file"
+      );
     }
     const operations = [];
+    // 将账号执行顺序列表打乱
+    const accountList = Helper.shuffle(accounts);
+    console.log(accountList, "accountList");
+    eventBus.setTotalAccounts(accountList.length);
     for (let index = 0; index < accountList.length; index++) {
       const account = accountList[index];
+      eventBus.setIndex(index + 1);
 
       if (index > 0) {
         // Add any specific logic for index > 0 here
         const randomDelay =
-          Math.floor(Math.random() * (120000 - 60000 + 1)) + 60000;
+          Math.floor(Math.random() * (12000 - 6000 + 1)) + 6000;
         await Helper.delay(randomDelay);
       }
       operations.push(operation(account, index));

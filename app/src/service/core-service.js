@@ -16,26 +16,31 @@ import { SIGNPACKAGE } from "../packages/sign-package.js";
 import { AMMPACKAGE } from "../packages/amm-package.js";
 import { COINS } from "../coin/coins.js";
 import { BEINGDEXPACKAGE } from "../packages/beingdex.js";
-import { accountList } from "../../accounts/accounts.js";
-import { proxyList } from "../../config/proxy_list.js";
 import { MANGOBRIDGEPACKAGE } from "../packages/mangobridge.js";
 import { BRIDGE } from "../chain/dest_chain.js";
+import logger from "../utils/logger.js";
+
+export const TaskStatus = {
+  PENDING: "⏳",
+  COMPLETED: "✅",
+  ALREADY_COMPLETED: "🟢",
+  FAILED: "❌",
+};
 
 export class CoreService extends API {
   constructor(account) {
-    let proxy;
-    const accountIndex = accountList.indexOf(account);
-    if (proxyList.length != accountList.length && proxyList.length != 0) {
-      throw Error(
-        "如何配置 proxy 请保证配置的数量和 account 数量一致: You Have " +
-          accountList.length +
-          " Accounts But Provide " +
-          proxyList.length
-      );
-    }
-    proxy = proxyList[accountIndex];
+    const { token, proxy, remark } = account;
     super(proxy);
-    this.acc = account;
+    this.acc = token;
+    this.remark = remark;
+    this.taskStatus = {
+      checkIn: TaskStatus.PENDING,
+      discord: TaskStatus.PENDING,
+      swap: TaskStatus.PENDING,
+      bridge: TaskStatus.PENDING,
+      exchange: TaskStatus.PENDING,
+    };
+
     this.explorer = "https://mgoscan.com";
     this.client = new MgoClient({
       transport: new MgoHTTPTransport({
@@ -205,10 +210,12 @@ export class CoreService extends API {
       if (response.data.code == 0) {
         this.discordTask = response.data.data;
         await Helper.delay(500, this.acc, response.data.msg, this);
+        this.taskStatus.discord = TaskStatus.COMPLETED;
       } else {
         throw new Error(response.data.msg);
       }
     } catch (error) {
+      this.taskStatus.discord = TaskStatus.FAILED;
       throw error;
     }
   }
@@ -318,6 +325,7 @@ export class CoreService extends API {
       });
       await this.executeTx(txBlock);
       await Helper.delay(1000, this.acc, "Successfully Daily Sign In", this);
+      return true;
     } catch (error) {
       await Helper.delay(
         1000,
@@ -325,6 +333,7 @@ export class CoreService extends API {
         "Failed to Daily Sign In, Possible already Sign In",
         this
       );
+      return false;
     }
   }
 
@@ -338,7 +347,13 @@ export class CoreService extends API {
         coinType: fromCoin.TYPE,
       });
       if (coins.data.length == 0) {
+        let retry = 0;
         while (coins.data.length == 0) {
+          if (retry > 5) {
+            logger.error("Swap: Failed to get " + fromCoin.SYMBOL + " balance");
+            throw new Error("swap");
+          }
+
           coins = await this.client.getCoins({
             owner: this.address,
             coinType: fromCoin.TYPE,
@@ -352,6 +367,7 @@ export class CoreService extends API {
               " until swap balance update",
             this
           );
+          retry++;
         }
       }
       if (coins.data.length > 1) {
@@ -372,10 +388,11 @@ export class CoreService extends API {
       if (fromCoin == COINS.MGO) {
         splitCoin = txBlock.splitCoins(txBlock.gas, [txBlock.pure(amount)]);
       } else {
-        // 非 MGO 代币是否随机切割交易总额， true: 随机交易 50%-100%， false：交易 100%
+        // 非 MGO 代币是否随机切割交易总额， true: 随机交易 30%-100%， false：交易 100%
         amount = Number(coins.data[0].balance);
-        // amount = isCut ? Math.floor(amount * Number(Math.random() * 0.5)) : amount;
-        // amount = Math.floor(amount * Number(Math.random() * 0.5));
+        // amount = isCut
+        //   ? Math.floor(amount * Number(Math.random() * 0.3))
+        //   : amount;
         splitCoin = txBlock.splitCoins(
           txBlock.object(coins.data[0].coinObjectId),
           [txBlock.pure(amount)]
@@ -466,6 +483,7 @@ export class CoreService extends API {
         this
       );
     } catch (error) {
+      logger.error("Swap: " + error);
       throw error;
     }
   }
@@ -488,7 +506,14 @@ export class CoreService extends API {
         coinType: fromCoin.TYPE,
       });
       if (coins.data.length == 0) {
+        let retry = 0;
         while (coins.data.length == 0) {
+          if (retry > 5) {
+            logger.error(
+              "Exchange: Failed to get " + fromCoin.SYMBOL + " balance"
+            );
+            throw new Error("exchange");
+          }
           coins = await this.client.getCoins({
             owner: this.address,
             coinType: fromCoin.TYPE,
@@ -502,6 +527,7 @@ export class CoreService extends API {
               " until swap balance update",
             this
           );
+          retry++;
         }
       }
       if (coins.data.length > 1) {
@@ -546,8 +572,10 @@ export class CoreService extends API {
           toCoin.SYMBOL,
         this
       );
+      return true;
     } catch (error) {
-      throw error;
+      logger.error("Exchange: " + error);
+      return false;
     }
   }
 

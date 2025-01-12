@@ -12,6 +12,8 @@ export class Helper {
     ms = ms + Math.floor(Math.random() * (2000 - 500 + 1)) + 500;
     return new Promise(async (resolve) => {
       let remainingTime = ms;
+      let resolved = false; // Initialize the resolved flag
+
       if (account != undefined) {
         await twist.log(
           message,
@@ -22,6 +24,7 @@ export class Helper {
       } else {
         twist.info("Delaying for " + this.msToTime(ms));
       }
+
       const interval = setInterval(async () => {
         remainingTime -= 1000;
         if (account != undefined) {
@@ -36,16 +39,23 @@ export class Helper {
         }
         if (remainingTime <= 0) {
           clearInterval(interval);
-          resolve();
+          if (!resolved) {
+            resolved = true;
+            resolve();
+          }
         }
       }, 1000);
+
       setTimeout(async () => {
         clearInterval(interval);
         await twist.clearInfo();
         if (account) {
           await twist.log(message, account, coreService);
         }
-        resolve();
+        if (!resolved) {
+          resolved = true;
+          resolve();
+        }
       }, ms);
     });
   };
@@ -76,6 +86,19 @@ export class Helper {
       "Mozilla/5.0 (Linux; Android 11; SM-N986B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.77 Mobile Safari/537.36 OPR/63.3.3216.58675",
     ];
     return userAgents[Math.floor(Math.random() * userAgents.length)];
+  }
+
+  // Shuffle accounts array
+  static shuffle(array) {
+    const shuffledArray = array.slice(); // Create a copy of the array
+    for (let i = shuffledArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledArray[i], shuffledArray[j]] = [
+        shuffledArray[j],
+        shuffledArray[i],
+      ];
+    }
+    return shuffledArray;
   }
 
   // Static method placeholder
