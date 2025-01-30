@@ -5,8 +5,8 @@
  */
 export const accounts = [
   {
-    token: "",
-    proxy: "",
+    proxy: "代理",
     remark: "",
+    memo: "助记词",
   },
 ];

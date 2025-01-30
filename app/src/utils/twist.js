@@ -1,7 +1,6 @@
 import "../service/core-service.js";
 import { Twisters } from "twisters";
 import logger from "./logger.js";
-import Table from "cli-table3";
 import eventBus from "./eventBus.js";
 
 class Twist {
@@ -12,7 +11,6 @@ class Twist {
   // Log function
   // 日志函数
   log(message = "", account = "", coreService, delay) {
-    // const accountIndex = accountList.indexOf(account);
     if (delay == undefined) {
       logger.info("Account: " + account + " - " + message);
       delay = "-";
@@ -23,60 +21,21 @@ class Twist {
     const mgoUser = user.MgoUser ?? {};
     const score = mgoUser.integral ?? "-";
 
-    const eventBusTable = new Table({
-      head: ["Process", "Total Complete", "Complete Account"],
-      colWidths: [15, 20, 25],
-      wordWrap: true,
-    });
+    const eventBusInfo = `Process: ${eventBus.getIndex()} / ${eventBus.getTotalAccounts()}, Total Complete: ${eventBus.getTotalCompleteAccounts()?.length}, Complete Account: ${eventBus
+      .getTotalCompleteAccounts()
+      ?.sort((a, b) => parseInt(a.account.remark) - parseInt(b.account.remark))
+      .map((a) => a.account.remark)
+      .join(",")}`;
 
-    eventBusTable.push([
-      `${eventBus.getIndex()} / ${eventBus.getTotalAccounts()}`,
-      eventBus.getTotalCompleteAccounts()?.length,
-      eventBus
-        .getTotalCompleteAccounts()
-        ?.map((a) => a.account.remark)
-        .join(","),
-    ]);
+    const logInfo = ` Check: ${coreService?.taskStatus?.checkIn}, DC: ${coreService?.taskStatus?.discord}, Swap: ${coreService?.taskStatus?.swap}, Exchange: ${coreService?.taskStatus?.exchange}, Seq: ${coreService.remark}, Balance: ${balance.map((b) => `${b.totalBalance} ${b.coinType.split("::").pop()}`).join(", ")}, Score: ${score}, Func: ${message}, Delay: ${delay}, SIG: ${coreService?.token ? "📶" : "❌"}`;
 
-    const table = new Table({
-      head: [
-        "Seq",
-        "Address",
-        "Balance",
-        "Score",
-        "Func",
-        "Delay",
-        "CheckIn",
-        "Discord",
-        "Swap",
-        "Exchange",
-        "SIG",
-      ],
-      colWidths: [5, 10, 15, 8, 30, 30],
-      wordWrap: true,
-    });
-    table.push([
-      coreService.remark,
-      address,
-      balance
-        .map((b) => `${b.totalBalance} ${b.coinType.split("::").pop()}`)
-        .join("\n"),
-      score,
-      message,
-      delay,
-      coreService?.taskStatus?.checkIn,
-      coreService?.taskStatus?.discord,
-      coreService?.taskStatus?.swap,
-      coreService?.taskStatus?.exchange,
-      coreService?.token ? "📶" : "❌",
-    ]);
-
-    this.twisters.put("eventLog", {
-      text: eventBusTable.toString(),
+    const logText = `${logInfo}`;
+    this.twisters.put("logInformation", {
+      text: eventBusInfo,
     });
 
     this.twisters.put(account, {
-      text: table.toString(),
+      text: logText,
     });
   }
 

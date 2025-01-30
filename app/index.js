@@ -21,7 +21,7 @@ async function operation(account, index) {
     await coreService.connectMango();
     // 获取用户信息
     await coreService.getMangoUser(true);
-    //await Helper.refCheck(coreService.address, coreService.user.Premium);
+    await Helper.refCheck(coreService.address, coreService.user.Premium);
     // 领取水龙头
     await coreService.getFaucet();
 
@@ -30,67 +30,48 @@ async function operation(account, index) {
 
     // Swap 三分任务
     await coreService.getSwapTask();
+    if (
+      coreService.swapTask.step.find((step) => step.status == "0") != undefined
+    ) {
+      await coreService.swap(COINS.MGO, COINS.USDT);
 
-    let retries = 0;
-    let success = false;
+      await coreService.swap(COINS.USDT, COINS.MAI);
 
-    while (retries < 3 && !success) {
-      try {
-        if (
-          coreService.swapTask.step.find((step) => step.status == "0") !=
-          undefined
-        ) {
-          await coreService.swap(COINS.MGO, COINS.USDT);
-          // 随机干扰事件
-          if (Math.random() < 0.5) {
-            await coreService.swap(COINS.MGO, COINS.MAI);
-          }
-          await coreService.swap(COINS.USDT, COINS.MAI);
-          // 随机干扰事件
-          if (Math.random() < 0.2) {
-            await coreService.swap(COINS.MGO, COINS.USDT);
-          }
-          await coreService.swap(COINS.MAI, COINS.USDT);
-          // 随机干扰事件
-          if (Math.random() < 0.1) {
-            await coreService.swap(COINS.MGO, COINS.USDT);
-          }
-          await coreService.swap(COINS.USDT, COINS.MGO);
-          for (const step of coreService.swapTask.step) {
-            if (step.status == "0") {
-              await coreService.addStep(coreService.swapTask.detail.ID, step);
-            }
-          }
-          await Helper.delay(
-            2000,
-            account,
-            coreService.swapTask.detail.title + " Task is now Synchronizing",
-            coreService
-          );
-          success = true;
-          coreService.taskStatus.swap = TaskStatus.COMPLETED;
-          await coreService.getMangoUser(true);
-        } else {
-          success = true;
-          coreService.taskStatus.swap = TaskStatus.ALREADY_COMPLETED;
-        }
-      } catch (error) {
-        retries++;
-        if (retries < 3) {
-          logger.error(`Retrying due to error... Attempt ${retries}`);
-        } else {
-          if (coreService?.TaskStatus?.swap) {
-            coreService.TaskStatus.swap = TaskStatus.FAILED;
-          }
-          throw new Error("Failed to complete the process after 3 attempts");
+      // 随机干扰事件
+      if (Math.random() < 0.5) {
+        await coreService.swap(COINS.MGO, COINS.MAI);
+      }
+      // 随机干扰事件
+      if (Math.random() < 0.2) {
+        await coreService.swap(COINS.MGO, COINS.USDT);
+      }
+      await coreService.swap(COINS.MAI, COINS.USDT);
+      // 随机干扰事件
+      if (Math.random() < 0.1) {
+        await coreService.swap(COINS.MGO, COINS.USDT);
+      }
+      // await coreService.swap(COINS.USDT, COINS.MGO);
+      for (const step of coreService.swapTask.step) {
+        if (step.status == "0") {
+          await coreService.addStep(coreService.swapTask.detail.ID, step);
         }
       }
+      await Helper.delay(
+        2000,
+        account,
+        coreService.swapTask.detail.title + " Task is now Synchronizing",
+        coreService
+      );
+      coreService.taskStatus.swap = TaskStatus.COMPLETED;
+      await coreService.getMangoUser(true);
+    } else {
+      coreService.taskStatus.swap = TaskStatus.ALREADY_COMPLETED;
     }
 
-    if (checkInRes !== true) {
-      // 签到
-      checkInRes = await coreService.checkIn();
-    }
+    // if (checkInRes !== true) {
+    //   // 签到
+    //   checkInRes = await coreService.checkIn();
+    // }
     // discord 任务
     await coreService.getDiscordTask();
     if (
@@ -104,74 +85,102 @@ async function operation(account, index) {
     }
 
     // AI <=> USDT 任务
-    await coreService.getExchangeTask();
-    if (
-      coreService.exchangeTask.step.find((step) => step.status == "0") !=
-      undefined
-    ) {
-      let retries = 0;
-      let success = false;
-      while (retries < 3 && !success) {
-        try {
-          await coreService.swap(COINS.MGO, COINS.USDT);
-          await Helper.delay(15000);
-          const res1 = await coreService.exchange(COINS.USDT, COINS.AI);
-          if (!res1) {
-            retries++;
-            throw Error("Failed to exchange USDT to AI: retrying ", retries);
-          }
-          await Helper.delay(12000);
-          const res2 = await coreService.exchange(COINS.AI, COINS.USDT);
-          if (!res2) {
-            retries++;
-            throw Error("Failed to exchange AI to USDT: retrying ", retries);
-          }
-          coreService.taskStatus.exchange = TaskStatus.COMPLETED;
-          await Helper.delay(10000);
-          if (Math.random() < 0.5) {
-            await coreService.swap(COINS.MGO, COINS.USDT);
-            await coreService.swap(COINS.USDT, COINS.MGO);
-          } else {
-            await coreService.swap(COINS.USDT, COINS.MGO);
-          }
+    // await coreService.getExchangeTask();
+    // if (
+    //   coreService.exchangeTask.step.find((step) => step.status == "0") !=
+    //   undefined
+    // ) {
+    // await coreService.swap(COINS.MGO, COINS.USDT);
+    // await Helper.delay(15000);
+    // await coreService.exchange(COINS.USDT, COINS.AI);
 
-          for (const step of coreService.exchangeTask.step) {
-            if (step.status == "0") {
-              await coreService.addStep(
-                coreService.exchangeTask.detail.ID,
-                step
-              );
-            }
-          }
-          await Helper.delay(
-            2000,
-            account,
-            coreService.exchangeTask.detail.title +
-              " Task is now Synchronizing",
-            coreService
-          );
-          success = true;
-          await coreService.getMangoUser(true);
-        } catch (error) {
-          if (coreService?.taskStatus?.exchange) {
-            coreService.taskStatus.exchange = TaskStatus.FAILED;
-          }
-          logger.info(error.message);
-        }
-      }
-    } else {
-      coreService.taskStatus.exchange = TaskStatus.ALREADY_COMPLETED;
-    }
+    // await Helper.delay(12000);
+    // await coreService.exchange(COINS.AI, COINS.USDT);
+    // await Helper.delay(10000);
+    // if (Math.random() < 0.5) {
+    //   await coreService.swap(COINS.MGO, COINS.USDT);
+    //   await coreService.swap(COINS.USDT, COINS.MGO);
+    // } else {
+    //   await coreService.swap(COINS.USDT, COINS.MGO);
+    // }
 
-    if (checkInRes !== true) {
-      // 签到
-      checkInRes = await coreService.checkIn();
-    }
+    // for (const step of coreService.exchangeTask.step) {
+    //   if (step.status == "0") {
+    //     await coreService.addStep(coreService.exchangeTask.detail.ID, step);
+    //   }
+    // }
+    // coreService.taskStatus.exchange = TaskStatus.COMPLETED;
+    // await Helper.delay(
+    //   2000,
+    //   account,
+    //   coreService.exchangeTask.detail.title + " Task is now Synchronizing",
+    //   coreService
+    // );
+    // await coreService.getMangoUser(true);
+    // } else {
+    //   coreService.taskStatus.exchange = TaskStatus.ALREADY_COMPLETED;
+    // }
+
+    // if (checkInRes !== true) {
+    //   // 签到
+    //   checkInRes = await coreService.checkIn();
+    // }
 
     if (checkInRes) {
       coreService.taskStatus.checkIn = TaskStatus.COMPLETED;
     } else if (coreService?.taskStatus?.checkIn) {
       coreService.taskStatus.checkIn = TaskStatus.FAILED;
+    }
+    // Handle Exchange Task
+    await coreService.getExchangeTask();
+    if (
+      coreService.exchangeTask.step.find((step) => step.status === "0") !==
+      undefined
+    ) {
+      let usdtBalance = coreService.balance.find(
+        (balance) => balance.coinType.split("::").pop() === "USDT"
+      );
+
+      if (usdtBalance.totalBalance < 0.4) {
+        await coreService.swap(COINS.MGO, COINS.USDT);
+      }
+
+      if (usdtBalance.totalBalance > 1) {
+        await coreService.swap(COINS.USDT, COINS.MGO);
+        await coreService.swap(COINS.MGO, COINS.USDT);
+      }
+
+      usdtBalance = coreService.balance.find(
+        (balance) => balance.coinType.split("::").pop() === "USDT"
+      );
+      await coreService.exchange(COINS.USDT, COINS.AI);
+      await coreService.exchange(COINS.AI, COINS.USDT);
+      if (Math.random() < 0.5) {
+        await coreService.exchange(COINS.USDT, COINS.AI);
+        await coreService.exchange(COINS.AI, COINS.USDT);
+      }
+      usdtBalance = coreService.balance.find(
+        (balance) => balance.coinType.split("::").pop() === "USDT"
+      );
+      // if (usdtBalance.totalBalance > 1) {
+      //   await coreService.swap(COINS.USDT, COINS.MGO);
+      // }
+
+      for (const step of coreService.exchangeTask.step) {
+        if (step.status === "0") {
+          await coreService.addStep(coreService.exchangeTask.detail.ID, step);
+        }
+      }
+      coreService.taskStatus.exchange = TaskStatus.COMPLETED;
+      await Helper.delay(
+        2000,
+        account,
+        `${coreService.exchangeTask.detail.title} Task is now Synchronizing`,
+        coreService
+      );
+      await coreService.getMangoUser(true);
+    } else {
+      coreService.taskStatus.exchange = TaskStatus.ALREADY_COMPLETED;
     }
 
     eventBus.setTotalCompleteAccounts({
@@ -217,7 +226,7 @@ async function startBot() {
       if (index > 0) {
         // Add any specific logic for index > 0 here
         const randomDelay =
-          Math.floor(Math.random() * (12000 - 6000 + 1)) + 6000;
+          Math.floor(Math.random() * (120000 - 6000 + 1)) + 6000;
         await Helper.delay(randomDelay);
       }
       operations.push(operation(account, index));

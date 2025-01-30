@@ -27,7 +27,8 @@ export class API {
       "User-Agent": this.ua,
     };
     if (token) {
-      headers["mgo-token"] = "" + token;
+      // headers["mgo-token"] = "" + token;
+      headers["mgo-token"] = `${token}`;
     }
     if (additionalHeaders) {
       Object.assign(headers, additionalHeaders);

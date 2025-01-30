@@ -1,8 +1,9 @@
 export const BEINGDEXPACKAGE = {
-    'ADDRESS': "0x7f683d74b5f8b533f68e93732fd0a06a527fc4e0bc9c59a6e040f8c2e0462d44",
-    'MODULE': {
-      'CLOB': {
-        'AIUSDTPOOL': '0xf5e672757fd4f0da1883085e3b51d74cd91597856e1f22a130bcc7c4d84380c6'
-      }
-    }
-  };
+  ADDRESS: "0xca0823bef9cdeb922e1932f9c082a0e81e3e6191dda39de654c80cd010d95481",
+  MODULE: {
+    CLOB: {
+      AIUSDTPOOL:
+        "0xd481053e669ba570a83b72b5b0662bc66ff1449a25b214468e81b1957f452139",
+    },
+  },
+};

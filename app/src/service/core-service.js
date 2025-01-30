@@ -3,7 +3,10 @@ import {
   MgoClient,
   MgoHTTPTransport,
 } from "@mgonetwork/mango.js/client";
-import { Ed25519Keypair } from "@mgonetwork/mango.js/keypairs/ed25519";
+import {
+  DEFAULT_ED25519_DERIVATION_PATH,
+  Ed25519Keypair,
+} from "@mgonetwork/mango.js/keypairs/ed25519";
 import { Helper } from "../utils/helper.js";
 import {
   bcs,
@@ -18,6 +21,7 @@ import { COINS } from "../coin/coins.js";
 import { BEINGDEXPACKAGE } from "../packages/beingdex.js";
 import { MANGOBRIDGEPACKAGE } from "../packages/mangobridge.js";
 import { BRIDGE } from "../chain/dest_chain.js";
+import BigNumber from "bignumber.js";
 import logger from "../utils/logger.js";
 
 export const TaskStatus = {
@@ -29,9 +33,9 @@ export const TaskStatus = {
 
 export class CoreService extends API {
   constructor(account) {
-    const { token, proxy, remark } = account;
+    const { memo, proxy, remark } = account;
     super(proxy);
-    this.acc = token;
+    this.acc = memo;
     this.remark = remark;
     this.taskStatus = {
       checkIn: TaskStatus.PENDING,
@@ -59,8 +63,12 @@ export class CoreService extends API {
         "Getting Wallet Information... 获取钱包信息...",
         this
       );
-      const privateKey = decodeMgoPrivateKey(this.acc);
-      this.wallet = Ed25519Keypair.fromSecretKey(privateKey.secretKey);
+      // const privateKey = decodeMgoPrivateKey(this.acc);
+      // this.wallet = Ed25519Keypair.fromSecretKey(this.acc );
+      this.wallet = Ed25519Keypair.deriveKeypair(
+        this.acc,
+        DEFAULT_ED25519_DERIVATION_PATH
+      );
       this.address = this.wallet.getPublicKey().toMgoAddress();
       await Helper.delay(
         1000,
@@ -349,11 +357,6 @@ export class CoreService extends API {
       if (coins.data.length == 0) {
         let retry = 0;
         while (coins.data.length == 0) {
-          if (retry > 5) {
-            logger.error("Swap: Failed to get " + fromCoin.SYMBOL + " balance");
-            throw new Error("swap");
-          }
-
           coins = await this.client.getCoins({
             owner: this.address,
             coinType: fromCoin.TYPE,
@@ -362,7 +365,7 @@ export class CoreService extends API {
           await Helper.delay(
             10000,
             this.acc,
-            "Delaying for " +
+            `${retry} Delaying for ` +
               Helper.msToTime(10000) +
               " until swap balance update",
             this
@@ -383,7 +386,7 @@ export class CoreService extends API {
       const randomDecimal = (Math.random() * (0.2 - 0.05) + 0.05).toFixed(
         Math.floor(Math.random() * (4 - 2 + 1)) + 2
       );
-      let amount = Number(randomDecimal) * Number(MIST_PER_MGO);
+      let amount = Math.floor(Number(randomDecimal) * Number(MIST_PER_MGO));
       let splitCoin;
       if (fromCoin == COINS.MGO) {
         splitCoin = txBlock.splitCoins(txBlock.gas, [txBlock.pure(amount)]);
@@ -508,21 +511,20 @@ export class CoreService extends API {
       if (coins.data.length == 0) {
         let retry = 0;
         while (coins.data.length == 0) {
-          if (retry > 5) {
-            logger.error(
-              "Exchange: Failed to get " + fromCoin.SYMBOL + " balance"
-            );
-            throw new Error("exchange");
-          }
           coins = await this.client.getCoins({
             owner: this.address,
             coinType: fromCoin.TYPE,
           });
+          console.log(coins.data.length);
+          await this.claimDealPool(
+            BEINGDEXPACKAGE.MODULE.CLOB.AIUSDTPOOL,
+            typeArguments
+          );
           await this.getBalance();
           await Helper.delay(
             10000,
             this.acc,
-            "Delaying for " +
+            `${retry} Delaying for ` +
               Helper.msToTime(10000) +
               " until swap balance update",
             this
@@ -537,25 +539,28 @@ export class CoreService extends API {
           coinType: fromCoin.TYPE,
         });
       }
-      const amount = Number(coins.data[0].balance);
+      const amount = new BigNumber(coins.data[0].balance);
       txBlock.moveCall({
         target:
           BEINGDEXPACKAGE.ADDRESS +
           "::clob::" +
-          (fromCoin == COINS.USDT ? "market_buy" : "sell"),
+          (fromCoin == COINS.USDT ? "buy" : "sell"),
         typeArguments: typeArguments,
         arguments:
           fromCoin == COINS.USDT
             ? [
                 txBlock.object(BEINGDEXPACKAGE.MODULE.CLOB.AIUSDTPOOL),
-                txBlock.object(coins.data[0].coinObjectId),
+                txBlock.pure("9223372036854775808"),
                 txBlock.pure(amount),
+                txBlock.pure(true),
+                txBlock.object(coins.data[0x0].coinObjectId),
               ]
             : [
                 txBlock.object(BEINGDEXPACKAGE.MODULE.CLOB.AIUSDTPOOL),
-                txBlock.object(coins.data[0].coinObjectId),
-                txBlock.pure(1),
+                txBlock.pure("9223372036854775808"),
                 txBlock.pure(amount),
+                txBlock.pure(false),
+                txBlock.object(coins.data[0x0].coinObjectId),
               ],
       });
       await this.executeTx(txBlock);
@@ -577,6 +582,28 @@ export class CoreService extends API {
       logger.error("Exchange: " + error);
       return false;
     }
+  }
+
+  async claimDealPool(dealPool, dealPoolType) {
+    await Helper.delay(
+      5000,
+      this.acc,
+      "Check and Claiming Being Dex Pool Balance ...",
+      this
+    );
+    const txBlock = new TransactionBlock();
+    txBlock.moveCall({
+      target: BEINGDEXPACKAGE.ADDRESS + "::clob::claim_deal_pool_balance",
+      typeArguments: dealPoolType,
+      arguments: [txBlock.object(dealPool)],
+    });
+    await this.executeTx(txBlock);
+    await Helper.delay(
+      5000,
+      this.acc,
+      "Being Dex Pool Balance Extracted Tx ...",
+      this
+    );
   }
 
   // Merge coins
